@@ -49,11 +49,10 @@ namespace AuthJWT
                 options.AddPolicy(name: MyAllowSpecificOrigins,
                                   builder =>
                                   {
-                                      builder.WithOrigins("http://localhost:4200",
-                                                          "https://localhost:4200")
-                                                           .AllowAnyHeader()
-                                                           .AllowAnyMethod()
-                                                           .AllowCredentials();
+                                      builder.SetIsOriginAllowed((host) => true)
+                                        .AllowAnyHeader()
+                                        .AllowAnyMethod()
+                                        .AllowCredentials();
                                   });
             });
 
@@ -117,15 +116,15 @@ namespace AuthJWT
                 swagger.AddSecurityRequirement(new OpenApiSecurityRequirement
                 {
                     {
-                          new OpenApiSecurityScheme
+                        new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference
                             {
-                                Reference = new OpenApiReference
-                                {
-                                    Type = ReferenceType.SecurityScheme,
-                                    Id = "Bearer"
-                                }
-                            },
-                            new string[] {}
+                                Type = ReferenceType.SecurityScheme,
+                                Id = "Bearer"
+                            }
+                        },
+                        new string[] {}
 
                     }
                 });
