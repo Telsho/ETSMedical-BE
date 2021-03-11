@@ -156,6 +156,7 @@ namespace AuthJWT
             {
                 endpoints.MapControllers();
                 endpoints.MapHub<CallHub>("/CallHub");
+                endpoints.MapHub<PatientDataHub>("/PatientDataHub");
             });
         }
     }
