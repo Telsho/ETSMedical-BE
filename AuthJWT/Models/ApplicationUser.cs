@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 
-namespace AuthJWT.Authentication
+namespace AuthJWT.Models
 {
     public class ApplicationUser : IdentityUser
     {
