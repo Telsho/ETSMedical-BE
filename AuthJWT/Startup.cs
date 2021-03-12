@@ -1,5 +1,8 @@
-using AuthJWT.Authentication;
 using AuthJWT.Hubs;
+using AuthJWT.Infrastructure;
+using AuthJWT.Models;
+using AuthJWT.Services;
+using AuthJWT.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -36,64 +39,71 @@ namespace AuthJWT
         {
 
             services.AddControllers();
-            services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(Configuration.GetConnectionString("ConnStr")));
 
-            // For Identity  
+            services.AddCustomDatabases(Configuration);
             services.AddIdentity<ApplicationUser, IdentityRole>()
                 .AddEntityFrameworkStores<ApplicationDbContext>()
                 .AddDefaultTokenProviders();
 
             // Adding CORS policy
-            services.AddCors(options =>
-            {
-                options.AddPolicy(name: MyAllowSpecificOrigins,
-                                  builder =>
-                                  {
-                                      builder.SetIsOriginAllowed((host) => true)
-                                        .AllowAnyHeader()
-                                        .AllowAnyMethod()
-                                        .AllowCredentials();
-                                  });
-            });
+            services.AddCorsPolicy(Configuration, MyAllowSpecificOrigins);
 
-            // Adding Authentication  
-            services.AddAuthentication(options =>
-            {
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-            })
+            services.AddJWTAuth(Configuration);
 
 
-            // Adding Jwt Bearer  
-            .AddJwtBearer(options =>
-            {
-                options.SaveToken = true;
-                options.RequireHttpsMetadata = false;
-                options.TokenValidationParameters = new TokenValidationParameters()
-                {
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidAudience = Configuration["JWT:ValidAudience"],
-                    ValidIssuer = Configuration["JWT:ValidIssuer"],
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["JWT:Secret"]))
-                };
-                options.Events = new JwtBearerEvents();
-                options.Events.OnMessageReceived = context =>
-                {
-                    StringValues token;
-                    if (context.Request.Path.Value.StartsWith("/callhub") && context.Request.Query.TryGetValue("token", out token))
-                    {
-                        context.Token = token;
-                    }
-
-                    return Task.CompletedTask;
-                };
-            });
-
+            services.AddCustomServices(Configuration);
             services.AddSignalR();
 
+            services.AddSwagger(Configuration);            
 
+        }
+
+        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.  
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        {
+            if (env.IsDevelopment())
+            {
+                app.UseDeveloperExceptionPage();
+            }
+
+            app.UseSwagger();
+            app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "ASP.NET 5 Web API v1"));
+
+            app.UseHttpsRedirection();
+
+            app.UseRouting();
+
+            app.UseCors(MyAllowSpecificOrigins);
+
+            app.UseAuthentication();
+            app.UseAuthorization();
+
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapControllers();
+                endpoints.MapHub<CallHub>("/Hub/CallHub");
+                endpoints.MapHub<PatientDataHub>("/Hub/PatientDataHub");
+            });
+        }
+
+
+
+        
+    }
+
+    public static class CustomExtensionMethods
+    {
+        public static IServiceCollection AddCustomDatabases(this IServiceCollection services, IConfiguration configuration)
+        {
+
+            services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(configuration.GetConnectionString("ConnStr")));
+
+
+
+            return services;
+        }
+        public static IServiceCollection AddSwagger(this IServiceCollection services, IConfiguration configuration)
+        {
             services.AddSwaggerGen(swagger =>
             {
                 //This is to generate the Default UI of Swagger Documentation    
@@ -130,34 +140,73 @@ namespace AuthJWT
                 });
             });
 
+            return services;
         }
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.  
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public static IServiceCollection AddCorsPolicy(this IServiceCollection services, IConfiguration configuration, string corsPolicy)
         {
-            if (env.IsDevelopment())
+            services.AddCors(options =>
             {
-                app.UseDeveloperExceptionPage();
-            }
-
-            app.UseSwagger();
-            app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "ASP.NET 5 Web API v1"));
-
-            app.UseHttpsRedirection();
-
-            app.UseRouting();
-
-            app.UseCors(MyAllowSpecificOrigins);
-
-            app.UseAuthentication();
-            app.UseAuthorization();
-
-            app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapControllers();
-                endpoints.MapHub<CallHub>("/CallHub");
-                endpoints.MapHub<PatientDataHub>("/PatientDataHub");
+                options.AddPolicy(name: corsPolicy,
+                                  builder =>
+                                  {
+                                      builder.SetIsOriginAllowed((host) => true)
+                                        .AllowAnyHeader()
+                                        .AllowAnyMethod()
+                                        .AllowCredentials();
+                                  });
             });
+
+            return services;
+        }
+
+        public static IServiceCollection AddCustomServices(this IServiceCollection services, IConfiguration configuration)
+        {
+            services.AddScoped<IConnectionService, ConnectionService>(); ;
+
+
+            return services;
+        }
+
+        public static IServiceCollection AddJWTAuth(this IServiceCollection services, IConfiguration configuration)
+        {
+            // Adding Authentication  
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+
+
+            // Adding Jwt Bearer  
+            .AddJwtBearer(options =>
+            {
+                options.SaveToken = true;
+                options.RequireHttpsMetadata = false;
+                options.TokenValidationParameters = new TokenValidationParameters()
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidAudience = configuration["JWT:ValidAudience"],
+                    ValidIssuer = configuration["JWT:ValidIssuer"],
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JWT:Secret"]))
+                };
+                options.Events = new JwtBearerEvents();
+                options.Events.OnMessageReceived = context =>
+                {
+                    StringValues token;
+                    if (context.Request.Path.Value.StartsWith("/Hub") && context.Request.Query.TryGetValue("token", out token))
+                    {
+                        context.Token = token;
+                    }
+
+                    return Task.CompletedTask;
+                };
+            });
+
+            return services;
         }
     }
+
 }
