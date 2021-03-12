@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace AuthJWT.Hubs
 {
-    //[Authorize]
+    [Authorize]
     public class PatientDataHub : Hub
     {
 
