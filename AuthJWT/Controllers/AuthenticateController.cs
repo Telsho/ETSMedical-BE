@@ -44,6 +44,7 @@ namespace AuthJWT.Controllers
                 var authClaims = new List<Claim>
                 {
                     new Claim(ClaimTypes.Name, user.UserName),
+                    new Claim(ClaimTypes.Role, user.Role),
                     new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                 };
 
@@ -62,8 +63,6 @@ namespace AuthJWT.Controllers
                     signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
                     );
 
-                _connectionService.LoginUser(user);
-
                 return Ok(new
                 {
                     token = new JwtSecurityTokenHandler().WriteToken(token),
@@ -79,9 +78,9 @@ namespace AuthJWT.Controllers
         {
             var userExists = await _userManager.FindByNameAsync(model.Username);
             if (userExists != null)
-                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "User already exists!" });
+                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "User already exists" });
 
-            if(model.Role != "Patient" || model.Role != "Doctor")
+            if(model.Role != "Patient" && model.Role != "Doctor")
                 return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "Please select an existing role" });
 
 
