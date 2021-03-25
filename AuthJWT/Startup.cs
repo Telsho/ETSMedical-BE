@@ -49,11 +49,10 @@ namespace AuthJWT
                 options.AddPolicy(name: MyAllowSpecificOrigins,
                                   builder =>
                                   {
-                                      builder.WithOrigins("http://localhost:4200",
-                                                          "https://localhost:4200")
-                                                           .AllowAnyHeader()
-                                                           .AllowAnyMethod()
-                                                           .AllowCredentials();
+                                      builder.SetIsOriginAllowed((host) => true)
+                                        .AllowAnyHeader()
+                                        .AllowAnyMethod()
+                                        .AllowCredentials();
                                   });
             });
 
