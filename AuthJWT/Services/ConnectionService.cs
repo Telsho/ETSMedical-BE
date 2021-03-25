@@ -12,20 +12,35 @@ namespace AuthJWT.Services
 {
     public class ConnectionService : IConnectionService
     {
-        public IEnumerable<ApplicationUser> GetUsersByRole(string role)
+        public IEnumerable<UserHub> GetUsersByRole(string role)
         {
-            return Connections.Users.Select(u => u.Value).Where(u => u.Role == role);
+            return Connections.Users.Select(u => u.Value).Where(u => u.Role == role).ToArray();
+        }
+        public IEnumerable<UserHub> GetAllUsers()
+        {
+            return Connections.Users.Select(u => u.Value).ToArray();
         }
 
-        public void LoginUser(ApplicationUser user)
+        public void LoginUser(UserHub user)
         {
-            Connections.Users.GetOrAdd(user.UserName, user);
+            Connections.Users.AddOrUpdate(user.UserName, user, (k , v) => user);
         }
 
-        public void LogoutUser(string name)
+        public UserHub LogoutUser(string name)
         {
-            var value = Connections.Users.Select(u => u.Value).Where(v => v.UserName == name).First();
+            UserHub value;
             Connections.Users.TryRemove(name, out value);
+
+            return value;
+        }
+
+        public UserHub GetUserByName(string name)
+        {
+            UserHub user;
+            if (Connections.Users.TryGetValue(name, out user))
+                return user;
+            else
+                throw new Exception("Can't find user " + name);
         }
     }
 }
@@ -34,8 +49,8 @@ public static class Connections
 {
     static Connections()
     {
-        Users = new ConcurrentDictionary<string, ApplicationUser>();
+        Users = new ConcurrentDictionary<string, UserHub>();
     }
 
-    public static ConcurrentDictionary<string,ApplicationUser> Users{ get; set; }
+    public static ConcurrentDictionary<string,UserHub> Users{ get; set; }
 }
