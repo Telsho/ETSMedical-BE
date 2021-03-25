@@ -5,9 +5,9 @@ using System.Threading.Tasks;
 
 namespace AuthJWT.Models
 {
-    public class UserInfo
+    public class Response
     {
-        public string userName { get; set; }
-        public string connectionId { get; set; }
+        public string Status { get; set; }
+        public string Message { get; set; }
     }
 }

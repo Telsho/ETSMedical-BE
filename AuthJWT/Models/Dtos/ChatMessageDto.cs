@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace AuthJWT.Authentication
+namespace AuthJWT.Models.Dtos
 {
-    public class Response
+    public class ChatMessageDto
     {
-        public string Status { get; set; }
+        public string Timestamp { get; set; }
+        public UserHub User { get; set; }
         public string Message { get; set; }
     }
 }
