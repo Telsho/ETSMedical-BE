@@ -31,10 +31,8 @@ namespace AuthJWT.Hubs
             if (connectionId == null)
                 throw new Exception("User is not connected");
 
-            if(data.ValueType == "temperature")
-                await Clients.Client(connectionId).SendAsync("transferTemperature", data.Value);
-            else if (data.ValueType == "heartbeat")
-                await Clients.Client(connectionId).SendAsync("transferHeartbeat", data.Value);
+            await Clients.Client(connectionId).SendAsync("transferTemperature", data.Temperature);
+            await Clients.Client(connectionId).SendAsync("transferHeartbeat", data.Heartbeat);
         }
 
 
