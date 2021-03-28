@@ -8,10 +8,13 @@ namespace AuthJWT.Services.Interfaces
 {
     public interface IConnectionService
     {
-        public void LoginUser(UserHub user);
-        public UserHub LogoutUser(string name);
-        public IEnumerable<UserHub> GetUsersByRole(string role);
-        public IEnumerable<UserHub> GetAllUsers();
-        public UserHub GetUserByName(string name);
+        public void LoginHubUser(UserHub user);
+        public void LoginInCallUser(string connectionId, string name);
+        public UserHub LogoutHubUser(string name);
+        public string LogoutInCallUser(string name);
+        public IEnumerable<UserHub> GetHubUsersByRole(string role);
+        public IEnumerable<UserHub> GetAllHubUsers();
+        public UserHub GetHubUserByName(string name);
+        public string GetInCallUserIdByName(string name);
     }
 }

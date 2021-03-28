@@ -12,33 +12,56 @@ namespace AuthJWT.Services
 {
     public class ConnectionService : IConnectionService
     {
-        public IEnumerable<UserHub> GetUsersByRole(string role)
+        public IEnumerable<UserHub> GetHubUsersByRole(string role)
         {
-            return Connections.Users.Select(u => u.Value).Where(u => u.Role == role).ToArray();
+            return Connections.HubUsers.Select(u => u.Value).Where(u => u.Role == role).ToArray();
         }
-        public IEnumerable<UserHub> GetAllUsers()
+        public IEnumerable<UserHub> GetAllHubUsers()
         {
-            return Connections.Users.Select(u => u.Value).ToArray();
-        }
-
-        public void LoginUser(UserHub user)
-        {
-            Connections.Users.AddOrUpdate(user.UserName, user, (k , v) => user);
+            return Connections.HubUsers.Select(u => u.Value).ToArray();
         }
 
-        public UserHub LogoutUser(string name)
+        public void LoginHubUser(UserHub user)
+        {
+            Connections.HubUsers.AddOrUpdate(user.UserName, user, (k , v) => user);
+        }
+
+        public UserHub LogoutHubUser(string name)
         {
             UserHub value;
-            Connections.Users.TryRemove(name, out value);
+            Connections.HubUsers.TryRemove(name, out value);
 
             return value;
         }
 
-        public UserHub GetUserByName(string name)
+        public UserHub GetHubUserByName(string name)
         {
             UserHub user;
-            if (Connections.Users.TryGetValue(name, out user))
+            if (Connections.HubUsers.TryGetValue(name, out user))
                 return user;
+            else
+                throw new Exception("Can't find user " + name);
+        }
+
+        public void LoginInCallUser(string connectionId, string name)
+        {
+            Connections.InCallUsers.AddOrUpdate(name, connectionId, (k, v) => connectionId);
+
+        }
+
+        public string LogoutInCallUser(string name)
+        {
+            string value;
+            Connections.InCallUsers.TryRemove(name, out value);
+
+            return value;
+        }
+
+        public string GetInCallUserIdByName(string name)
+        {
+            string connectionId;
+            if (Connections.InCallUsers.TryGetValue(name, out connectionId))
+                return connectionId;
             else
                 throw new Exception("Can't find user " + name);
         }
@@ -49,8 +72,10 @@ public static class Connections
 {
     static Connections()
     {
-        Users = new ConcurrentDictionary<string, UserHub>();
+        HubUsers = new ConcurrentDictionary<string, UserHub>();
+        InCallUsers = new ConcurrentDictionary<string, string>();
     }
 
-    public static ConcurrentDictionary<string,UserHub> Users{ get; set; }
+    public static ConcurrentDictionary<string,UserHub> HubUsers{ get; set; }
+    public static ConcurrentDictionary<string,string> InCallUsers { get; set; }
 }

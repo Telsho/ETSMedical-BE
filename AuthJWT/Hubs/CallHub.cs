@@ -28,9 +28,9 @@ namespace AuthJWT.Hubs
         {
             var user = await _userManager.FindByNameAsync(Context.User.Identity.Name);
             var hubUser = new UserHub() { UserName = Context.User.Identity.Name, ConnectionId = Context.ConnectionId, Role = user.Role };
-            _connectionService.LoginUser(hubUser);
+            _connectionService.LoginHubUser(hubUser);
             
-            var allUsers = _connectionService.GetAllUsers();
+            var allUsers = _connectionService.GetAllHubUsers();
 
             if (user.Role == "Patient")
             {
@@ -54,7 +54,7 @@ namespace AuthJWT.Hubs
 
         public async Task CallUser(UserHub callUser)
         {
-            var currentUser = _connectionService.GetUserByName(Context.User.Identity.Name);
+            var currentUser = _connectionService.GetHubUserByName(Context.User.Identity.Name);
             await Clients.Client(callUser.ConnectionId).SendAsync("CallRequest", currentUser);            
         }
         public async Task SendMessage(string message)
@@ -78,18 +78,18 @@ namespace AuthJWT.Hubs
         }
         public async Task CallRequest(UserHub calledUser)
         {
-            var currentUser = _connectionService.GetUserByName(Context.User.Identity.Name);
+            var currentUser = _connectionService.GetHubUserByName(Context.User.Identity.Name);
             await Clients.Client(calledUser.ConnectionId).SendAsync("UserIsCalling", currentUser);
         }
         public async Task CallAccepted(UserHub calledUser)
         {
-            var currentUser = _connectionService.GetUserByName(Context.User.Identity.Name);
+            var currentUser = _connectionService.GetHubUserByName(Context.User.Identity.Name);
             await Clients.Client(calledUser.ConnectionId).SendAsync("CallAccepted", currentUser);
         }
 
         public override async Task OnDisconnectedAsync(Exception exception)
         {
-            var user = _connectionService.LogoutUser(Context.User.Identity.Name);
+            var user = _connectionService.LogoutHubUser(Context.User.Identity.Name);
             await Clients.All.SendAsync("DisconnectedUser", user);
 
             await base.OnDisconnectedAsync(exception);

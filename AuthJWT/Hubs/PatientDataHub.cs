@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using AuthJWT.Models.Dtos;
+using AuthJWT.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using System;
 using System.Collections.Generic;
@@ -10,6 +12,38 @@ namespace AuthJWT.Hubs
     [Authorize]
     public class PatientDataHub : Hub
     {
+        
+        IConnectionService _connectionService;
+
+        public PatientDataHub(IConnectionService connectionService)
+        {
+            _connectionService = connectionService;
+        }
+
+        public void Login(string name)
+        {
+            _connectionService.LoginInCallUser(Context.ConnectionId, name);
+        }
+
+        public async Task SendData(PatientDataDto data)
+        {
+            var connectionId = _connectionService.GetInCallUserIdByName(data.DoctorName);
+            if (connectionId == null)
+                throw new Exception("User is not connected");
+
+            if(data.ValueType == "temperature")
+                await Clients.Client(connectionId).SendAsync("transferTemperature", data.Value);
+            else if (data.ValueType == "heartbeat")
+                await Clients.Client(connectionId).SendAsync("transferHeartbeat", data.Value);
+        }
+
+
+        public override async Task OnDisconnectedAsync(Exception exception)
+        {
+            var user = _connectionService.LogoutInCallUser(Context.User.Identity.Name);
+
+            await base.OnDisconnectedAsync(exception);
+        }
 
     }
 }

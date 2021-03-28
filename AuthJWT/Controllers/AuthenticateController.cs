@@ -105,7 +105,7 @@ namespace AuthJWT.Controllers
         public async Task<IActionResult> Logout()
         {
             var x = User.FindFirstValue(ClaimTypes.Name);
-            _connectionService.LogoutUser(x);
+            _connectionService.LogoutHubUser(x);
             return Ok(new Response { Status = "Success", Message = "Logout successfull" });
         }
 
