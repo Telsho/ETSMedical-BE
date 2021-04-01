@@ -1,6 +1,8 @@
-﻿using AuthJWT.Models.Dtos;
+﻿using AuthJWT.Models;
+using AuthJWT.Models.Dtos;
 using AuthJWT.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.SignalR;
 using System;
 using System.Collections.Generic;
@@ -12,27 +14,26 @@ namespace AuthJWT.Hubs
     [Authorize]
     public class PatientDataHub : Hub
     {
-        
         IConnectionService _connectionService;
 
-        public PatientDataHub(IConnectionService connectionService)
+        public PatientDataHub(IConnectionService connectionService, UserManager<ApplicationUser> userManager)
         {
             _connectionService = connectionService;
         }
 
-        public void Login(string name)
+        public void Login()
         {
-            _connectionService.LoginInCallUser(Context.ConnectionId, name);
+            _connectionService.LoginInCallUser(Context.ConnectionId, Context.User.Identity.Name);
         }
 
-        public async Task SendData(PatientDataDto data)
+        public async Task SendData(string doctorName, float temperature, float heartbeat)
         {
-            var connectionId = _connectionService.GetInCallUserIdByName(data.DoctorName);
+            var connectionId = _connectionService.GetInCallUserIdByName(doctorName);
             if (connectionId == null)
                 throw new Exception("User is not connected");
 
-            await Clients.Client(connectionId).SendAsync("transferTemperature", data.Temperature);
-            await Clients.Client(connectionId).SendAsync("transferHeartbeat", data.Heartbeat);
+            await Clients.Client(connectionId).SendAsync("transferTemperature", temperature);
+            await Clients.Client(connectionId).SendAsync("transferHeartbeat", heartbeat);
         }
 
 

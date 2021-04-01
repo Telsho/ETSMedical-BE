@@ -16,7 +16,7 @@ using System.Threading.Tasks;
 
 namespace AuthJWT.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     [ApiController]
     public class AuthenticateController : ControllerBase
     {
